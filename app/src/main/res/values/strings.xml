@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">SerialNumberScan</string>
+    <string name="settings">Settings</string>
+
+    <string name="action_settings">Settings</string>
+
+    <string name="username">User Name</string>
+    <string name="password">Password</string>
+</resources>
