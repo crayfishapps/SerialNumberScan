@@ -1,5 +1,6 @@
 package com.crayfishapps.serialnumberscan;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -10,12 +11,11 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
+
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -24,12 +24,10 @@ import com.journeyapps.barcodescanner.BarcodeCallback;
 import com.journeyapps.barcodescanner.BarcodeResult;
 import com.journeyapps.barcodescanner.CompoundBarcodeView;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.net.URL;
@@ -65,11 +63,14 @@ public class MainActivity extends Activity {
                 return "Unable to retrieve web page. URL may be invalid.";
             }
         }
+
         // onPostExecute displays the results of the AsyncTask.
         @Override
         protected void onPostExecute(String result) {
-            // parse the results from the Axis Product Widget
 
+            int start, end;
+
+            // parse the results from the Axis Product Widget
             if (result.length() > 2000) {
                 int posSerialNumber = result.indexOf("Serial number", 2000);
                 int posPartDescription = result.indexOf("Part description");
@@ -77,11 +78,25 @@ public class MainActivity extends Activity {
                 int posProductWarranty = result.indexOf("Product warranty");
                 int posEOW = result.indexOf("EOW date");
 
-                String toastText = "Serial number: " + result.substring(posSerialNumber + 19, posSerialNumber + 32) + "\n";
-                toastText += "Part description: " + result.substring(posPartDescription + 22, posPartNumber - 14) + "\n";
-                toastText += "Part number: " + result.substring(posPartNumber + 17, posPartNumber + 26) + "\n";
-                toastText += "Product warranty: " + result.substring(posProductWarranty + 29, posProductWarranty + 31) + " years\n";
-                toastText += "EOW date: " + result.substring(posEOW + 14, posEOW + 25);
+                start = result.indexOf(">", posSerialNumber) + 1;
+                end = result.indexOf("<", start);
+                String toastText = "Serial number: " + result.substring(start, end) + "\n";
+
+                start = result.indexOf(">", posPartDescription) + 1;
+                end = result.indexOf("<", start);
+                toastText += "Part description: "  + result.substring(start, end) + "\n";
+
+                start = result.indexOf(">", posPartNumber) + 1;
+                end = result.indexOf("<", start);
+                toastText += "Part number: " + result.substring(start, end) + "\n";
+
+                start = result.indexOf(">", posProductWarranty) + 1;
+                end = result.indexOf("<", start);
+                toastText += "Product warranty: " + result.substring(start, end) + " years\n";
+
+                start = result.indexOf(">", posEOW) + 1;
+                end = result.indexOf("<", start);
+                toastText += "EOW date: " + result.substring(start, end);
 
                 Toast.makeText(getApplicationContext(), toastText, Toast.LENGTH_LONG).show();
             }
@@ -122,7 +137,7 @@ public class MainActivity extends Activity {
     }
 
     // Reads an InputStream and converts it to a String.
-    public String readIt(InputStream stream, int len) throws IOException, UnsupportedEncodingException {
+    public String readIt(InputStream stream, int len) throws IOException {
         Reader reader = null;
         reader = new InputStreamReader(stream, "UTF-8");
         char[] buffer = new char[len];
@@ -155,10 +170,11 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-
         setContentView(R.layout.activity_main);
+
+        // setup action bar to show logo and title bar
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_HOME | ActionBar.DISPLAY_SHOW_TITLE);
 
         barcodeView = (CompoundBarcodeView) findViewById(R.id.barcode_scanner);
         barcodeView.decodeContinuous(callback);
@@ -187,7 +203,7 @@ public class MainActivity extends Activity {
         super.onResume();
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        username = preferences.getString("preference_username", "root");
+        username = preferences.getString("preference_username", "");
         password = preferences.getString("preference_password", "");
 
         barcodeView.resume();
